@@ -140,24 +140,39 @@ jobs:
           exit 1
 
   # Job 4: Deploy to Railway (Mock - For demonstration only)
-  deploy-railway:
-    name: Deploy to Railway
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main'
+    deploy-railway:
+      name: Deploy to Railway
+      runs-on: ubuntu-latest
+      needs: build
+      if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: Mock Railway Deployment
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Login and Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          echo "🚂 Mock Railway Deployment Started"
-          echo "📦 Simulating Railway deployment process..."
-          echo "🔗 Mock: Linking to Railway project..."
-          echo "🚀 Mock: Deploying to Railway..."
-          echo "⏳ Mock: Waiting for deployment to complete..."
-          sleep 10
-          echo "✅ Mock Railway deployment completed successfully!"
-          echo "🎉 Railway app is now live at: https://mock-railway-app.up.railway.app"
-          echo "📊 Mock: Railway deployment health check passed!"
-          echo ""
-          echo "Note: This is a mock deployment for demonstration purposes."
-          echo "In a real scenario, this would deploy to actual Railway platform."
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --ci
+      
+      - name: Wait for deployment
+        run: sleep 60
+      
+      - name: Health check
+        run: |
+          for i in {1..5}; do
+            if curl -f ${{ secrets.RAILWAY_APP_URL }}/api/health; then
+              echo "Railway deployment successful!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Railway deployment health check failed"
+          exit 1
+
