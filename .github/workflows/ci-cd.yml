@@ -139,7 +139,7 @@ jobs:
           echo "Deployment health check failed"
           exit 1
 
-  # 🚄 Job 4: Deploy to Railway (เวอร์ชันแก้ใหม่ ใช้งานได้แน่นอน)
+  # 🚄 Job 4: Deploy to Railway (อัปเดตใหม่ล่าสุด 2025)
   deploy-railway:
     name: Deploy to Railway
     runs-on: ubuntu-latest
@@ -161,8 +161,9 @@ jobs:
       - name: Initialize and Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway link --id $RAILWAY_PROJECT_ID
           railway up --ci
       
       - name: Wait for deployment
