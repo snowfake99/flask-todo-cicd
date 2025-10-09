@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.models import db, Todo
 from sqlalchemy.exc import SQLAlchemyError
 
+
 api = Blueprint('api', __name__)
 
 
@@ -146,3 +147,4 @@ def delete_todo(todo_id):
             'success': False,
             'error': 'Failed to delete todo'
         }), 500
+    
