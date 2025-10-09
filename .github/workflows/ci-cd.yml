@@ -139,7 +139,7 @@ jobs:
           echo "Deployment health check failed"
           exit 1
 
-    # Job 4: Deploy to Railway
+  # Job 4: Deploy to Railway
   deploy-railway:
     name: Deploy to Railway
     runs-on: ubuntu-latest
@@ -152,18 +152,18 @@ jobs:
       
       - name: Install Railway CLI
         run: npm install -g @railway/cli
-      
+
       - name: Verify Railway Login
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway whoami || echo "Railway token ready"
 
-      - name: Deploy to Railway
+      - name: Initialize and Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }}
-          railway up --detach
+          railway init --project=${{ secrets.RAILWAY_PROJECT_ID }} --yes
+          railway up --yes --detach
       
       - name: Wait for deployment
         run: sleep 60
@@ -180,4 +180,3 @@ jobs:
           done
           echo "Railway deployment health check failed"
           exit 1
-
