@@ -1,11 +1,9 @@
 import os
 from flask import Flask, jsonify
+from flask_cors import CORS
 from app.models import db
 from app.routes import api
 from app.config import config
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_migrate import Migrate
 
 
 def create_app(config_name=None):
@@ -13,28 +11,29 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.getenv('FLASK_ENV', 'development')
 
-    # ✅ สร้าง Flask app ก่อน
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
-    # ✅ Initialize extensions
+    # Enable CORS for GitHub Pages
+    # แก้ไข code บรรทัด "https://your-username.github.io"  ให้เป็นโดเมนของเว็บตนเอง
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "http://localhost:3000",
+                "http://localhost:5000",
+                "https://*.github.io",
+                "https://your-username.github.io"
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type"],
+            "supports_credentials": False
+        }
+    })
+
     db.init_app(app)
-
-    # ✅ Setup limiter (จำกัดจำนวน request)
-    limiter = Limiter(
-        key_func=get_remote_address,
-        default_limits=["200 per day", "50 per hour"]
-    )
-    limiter.init_app(app)
-
-    # ✅ Setup database migration
-    migrate = Migrate(app, db)
-
-    # ✅ Register blueprints
     app.register_blueprint(api, url_prefix='/api')
 
-    # ✅ Root endpoint
     @app.route('/')
     def index():
         return jsonify({
@@ -46,7 +45,6 @@ def create_app(config_name=None):
             }
         })
 
-    # ✅ Error handlers
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({
@@ -56,6 +54,7 @@ def create_app(config_name=None):
 
     @app.errorhandler(500)
     def internal_error(error):
+        db.session.rollback()
         return jsonify({
             'success': False,
             'error': 'Internal server error'
@@ -70,7 +69,6 @@ def create_app(config_name=None):
             'error': 'Internal server error'
         }), 500
 
-    # ✅ สร้างตารางถ้ายังไม่มี
     with app.app_context():
         db.create_all()
 
